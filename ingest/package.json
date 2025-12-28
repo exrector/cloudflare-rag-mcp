@@ -8,6 +8,9 @@
   },
   "dependencies": {
     "@octokit/rest": "^20.0.2",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "libsodium-wrappers": "^0.7.15",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1"
   }
 }

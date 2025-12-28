@@ -183,7 +183,17 @@ async function main() {
     process.exit(1);
   }
 
-  const files = await getGitHubFiles();
+  let files = await getGitHubFiles();
+
+  // Защита от превышения Cloudflare Free tier лимитов
+  const MAX_FILES = parseInt(process.env.MAX_FILES || '100');
+  const MAX_EMBEDDINGS = parseInt(process.env.MAX_EMBEDDINGS || '500');
+
+  if (files.length > MAX_FILES) {
+    console.log(`⚠️  WARNING: Found ${files.length} files, limiting to ${MAX_FILES} to stay within free tier`);
+    files = files.slice(0, MAX_FILES);
+  }
+
   console.log('\n📝 Processing files...');
   const allChunks = [];
 
@@ -210,6 +220,13 @@ async function main() {
   }
 
   console.log(`\n✅ Total chunks created: ${allChunks.length}`);
+
+  // Проверка лимита embeddings
+  if (allChunks.length > MAX_EMBEDDINGS) {
+    console.log(`⚠️  WARNING: ${allChunks.length} chunks exceeds limit of ${MAX_EMBEDDINGS} embeddings`);
+    console.log(`   Limiting to ${MAX_EMBEDDINGS} to stay within Cloudflare Free tier (10,000/day)`);
+    allChunks.length = MAX_EMBEDDINGS; // Обрезаем массив
+  }
 
   console.log('\n🤖 Creating embeddings with Cloudflare Workers AI...');
   const texts = allChunks.map(c => c.text);
