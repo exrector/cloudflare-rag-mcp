@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "ingest": "cd ingest && node ingest-v2.js"
+    "deploy:webhook": "wrangler deploy --config wrangler-webhook.toml",
+    "dev:webhook": "wrangler dev --config wrangler-webhook.toml"
   },
   "keywords": ["rag", "mcp", "cloudflare", "vectorize", "claude"],
   "author": "",
