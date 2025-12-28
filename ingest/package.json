@@ -1,0 +1,13 @@
+{
+  "name": "rag-ingest",
+  "version": "1.0.0",
+  "description": "Ingest script for loading GitHub repository into Cloudflare Vectorize",
+  "type": "module",
+  "scripts": {
+    "start": "node ingest.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "dotenv": "^16.4.7"
+  }
+}

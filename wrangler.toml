@@ -1,0 +1,22 @@
+name = "rag-mcp-server"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Vectorize binding
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "myrag-index"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Environment variables
+[vars]
+EMBEDDING_MODEL = "@cf/baai/bge-large-en-v1.5"
+CHUNK_SIZE = "512"
+CHUNK_OVERLAP = "50"
+
+# Секретные переменные (установите через: wrangler secret put VARIABLE_NAME)
+# GITHUB_TOKEN - для доступа к приватному репозиторию (только для ingest)
+# MCP_AUTH_TOKEN - для авторизации MCP клиентов (опционально)

@@ -1,0 +1,19 @@
+{
+  "name": "cloudflare-rag-mcp",
+  "version": "1.0.0",
+  "description": "Personal RAG knowledge base using Cloudflare Vectorize and MCP integration for Claude",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "ingest": "cd ingest && node ingest.js"
+  },
+  "keywords": ["rag", "mcp", "cloudflare", "vectorize", "claude"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "wrangler": "^3.91.0",
+    "typescript": "^5.7.2"
+  }
+}
