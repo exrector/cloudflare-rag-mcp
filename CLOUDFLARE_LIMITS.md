@@ -50,18 +50,17 @@ concurrency:
 
 ### 2. Ограничение размера ingest
 
-В `ingest/ingest.js` уже есть:
+В `ingest/ingest-v2.js` уже есть защита:
 - `minChunkSize: 1` - минимальный размер chunk
 - `chunkSize: 512` - максимальный размер chunk
+- `MAX_FILES` - лимит файлов за один запуск (default: 100)
+- `MAX_EMBEDDINGS` - лимит embeddings за один запуск (default: 500)
 
-**Для дополнительной защиты:**
+**Защита реализована:**
 
 ```javascript
-// Максимум файлов за один ingest
-const MAX_FILES_PER_RUN = 100;
-
-// Максимум embeddings за один ingest
-const MAX_EMBEDDINGS_PER_RUN = 500;
+const MAX_FILES = parseInt(process.env.MAX_FILES || '100');
+const MAX_EMBEDDINGS = parseInt(process.env.MAX_EMBEDDINGS || '500');
 ```
 
 ### 3. Monitoring

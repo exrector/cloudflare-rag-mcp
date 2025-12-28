@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "ingest": "cd ingest && node ingest.js"
+    "ingest": "cd ingest && node ingest-v2.js"
   },
   "keywords": ["rag", "mcp", "cloudflare", "vectorize", "claude"],
   "author": "",

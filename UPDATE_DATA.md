@@ -46,14 +46,16 @@ jobs:
       - name: Install dependencies
         run: cd ingest && npm install
       
-      - name: Run ingest
+      - name: Run ingest v2 (D1 + Vectorize)
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           GITHUB_REPO: exrector/myRAG
           GITHUB_BRANCH: main
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: cd ingest && node ingest.js
+          MAX_FILES: 100
+          MAX_EMBEDDINGS: 500
+        run: cd ingest && node ingest-v2.js
 ```
 
 **GitHub Secrets для настройки:**

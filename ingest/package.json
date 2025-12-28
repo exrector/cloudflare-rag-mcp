@@ -4,7 +4,7 @@
   "description": "Ingest script for loading GitHub repository into Cloudflare Vectorize",
   "type": "module",
   "scripts": {
-    "start": "node ingest.js"
+    "start": "node ingest-v2.js"
   },
   "dependencies": {
     "@octokit/rest": "^20.0.2",

@@ -37,22 +37,32 @@ claude mcp add --transport http knowledge https://rag-mcp-server.YOUR.workers.de
 ```
 GitHub Repo (приватный)
     ↓
-Ingest Script
+Ingest Script (v2)
     ↓
-Cloudflare Workers AI (@cf/baai/bge-base-en-v1.5)
+Cloudflare Workers AI (@cf/baai/bge-large-en-v1.5)
     ↓
-Cloudflare Vectorize (768-dim vectors)
+├─ D1 Database (полные тексты чанков + метаданные)
+└─ Vectorize (векторы + легкие метаданные с chunk_id)
     ↓
 Cloudflare Worker (MCP Server, JSON-RPC 2.0)
+  ├─ Query: Vectorize → получить chunk_ids
+  └─ Fetch: D1 → получить полные тексты
     ↓
 Claude Desktop / Claude Code
 ```
 
+**Правильная архитектура RAG:**
+- **D1**: Хранит полные тексты чанков, метаданные документов, историю синхронизаций
+- **Vectorize**: Хранит только векторы + минимальные метаданные (chunk_id, topic, file_path)
+- **R2** (опционально): Для хранения оригинальных больших файлов
+
 ## Файлы
 
-- `ingest/ingest.js` - загрузка данных из GitHub
-- `src/index.ts` - MCP Worker
-- `wrangler.toml` - конфигурация Cloudflare
+- `ingest/ingest-v2.js` - загрузка данных из GitHub (D1 + Vectorize)
+- `ingest/ingest-v1-legacy.js` - старая версия (только Vectorize, deprecated)
+- `src/index.ts` - MCP Worker с поддержкой D1
+- `schema.sql` - схема D1 базы данных
+- `wrangler.toml` - конфигурация Cloudflare (D1, Vectorize, Workers AI)
 - `.env.example` - шаблон переменных окружения
 - `SETUP.sh` - автоматическая установка
 
@@ -113,10 +123,12 @@ npm run ingest
 
 ## Технические детали
 
-- **Embedding модель:** `@cf/baai/bge-base-en-v1.5` (768 dimensions)
+- **Embedding модель:** `@cf/baai/bge-large-en-v1.5` (1024 dimensions)
+- **D1 Database:** SQLite база для полных текстов и метаданных
 - **Vectorize metric:** cosine similarity
 - **Chunking:** 512 слов, overlap 50
 - **MCP Protocol:** JSON-RPC 2.0 over HTTP
+- **Архитектурный паттерн:** Vectorize (chunk_id) → D1 (full text)
 
 ## Стоимость
 
