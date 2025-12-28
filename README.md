@@ -79,20 +79,22 @@ claude mcp add --transport http knowledge https://rag-mcp-server.exrector.worker
   --header "Authorization: Bearer e4e0b98b4c8cc0bd0fd4681655815eee16c941ae710455fbd00e58a7be795bca"
 ```
 
-**Или для Claude Desktop** (`~/.claude/claude_desktop_config.json`):
+**Claude Desktop** использует stdio transport. Конфигурация автоматически установлена в:
+`~/Library/Application Support/Claude/claude_desktop_config.json`
 ```json
 {
   "mcpServers": {
     "knowledge": {
-      "type": "http",
-      "url": "https://rag-mcp-server.exrector.workers.dev",
-      "headers": {
-        "Authorization": "Bearer e4e0b98b4c8cc0bd0fd4681655815eee16c941ae710455fbd00e58a7be795bca"
-      }
+      "command": "node",
+      "args": [
+        "/Users/exrector/cloudflare-rag-mcp/mcp-stdio-bridge.cjs"
+      ]
     }
   }
 }
 ```
+
+**Важно:** Claude Desktop требует stdio transport. Файл `mcp-stdio-bridge.cjs` автоматически конвертирует stdio ↔ HTTP с авторизацией.
 
 ## Что нужно
 
