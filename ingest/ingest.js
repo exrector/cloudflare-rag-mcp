@@ -26,13 +26,39 @@ const CONFIG = {
     chunkOverlap: 50,
     minChunkSize: 1
   },
-  supportedExtensions: ['.md', '.txt', '.mdx', '.rst']
+  supportedExtensions: ['.md', '.txt', '.mdx', '.rst'],
+  excludedPaths: ['.git', '.github', 'node_modules', '.DS_Store', '.png', '.jpg', '.jpeg', '.gif', '.pdf'],
+  excludedExtensions: ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.pdf']
 };
 
 const octokit = new Octokit({ auth: CONFIG.github.token });
 
 function countWords(text) {
   return text.split(/\s+/).filter(w => w.length > 0).length;
+}
+
+function isTextFile(filePath) {
+  // Проверяем расширение
+  const ext = path.extname(filePath).toLowerCase();
+
+  // Если есть поддерживаемое расширение
+  if (CONFIG.supportedExtensions.includes(ext)) return true;
+
+  // Если исключённое расширение (бинарные файлы)
+  if (CONFIG.excludedExtensions.includes(ext)) return false;
+
+  // Если файл без расширения - проверяем что он не служебный
+  if (!ext) {
+    const fileName = path.basename(filePath);
+    // Пропускаем скрытые файлы
+    if (fileName.startsWith('.')) return false;
+    // Пропускаем исключённые пути
+    if (CONFIG.excludedPaths.some(excluded => filePath.includes(excluded))) return false;
+    // Считаем текстовым файлом
+    return true;
+  }
+
+  return false;
 }
 
 async function getGitHubFiles() {
@@ -46,8 +72,7 @@ async function getGitHubFiles() {
   });
 
   const files = data.tree.filter(item =>
-    item.type === 'blob' &&
-    CONFIG.supportedExtensions.some(ext => item.path.endsWith(ext))
+    item.type === 'blob' && isTextFile(item.path)
   );
 
   console.log(`✅ Found ${files.length} supported files`);
