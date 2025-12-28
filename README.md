@@ -71,8 +71,27 @@ npm run deploy:webhook
 
 ### 4. Подключить к Claude
 
+**🔒 Важно:** MCP Server защищен токеном! Токен находится в файле `MCP_AUTH_TOKEN.txt`
+
 ```bash
-claude mcp add --transport http knowledge https://rag-mcp-server.YOUR.workers.dev
+# Токен из файла MCP_AUTH_TOKEN.txt
+claude mcp add --transport http knowledge https://rag-mcp-server.exrector.workers.dev \
+  --header "Authorization: Bearer e4e0b98b4c8cc0bd0fd4681655815eee16c941ae710455fbd00e58a7be795bca"
+```
+
+**Или для Claude Desktop** (`~/.claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "knowledge": {
+      "type": "http",
+      "url": "https://rag-mcp-server.exrector.workers.dev",
+      "headers": {
+        "Authorization": "Bearer e4e0b98b4c8cc0bd0fd4681655815eee16c941ae710455fbd00e58a7be795bca"
+      }
+    }
+  }
+}
 ```
 
 ## Что нужно

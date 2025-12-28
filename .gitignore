@@ -32,3 +32,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 .cache/
+
+# Secrets (never commit!)
+MCP_AUTH_TOKEN.txt

@@ -127,6 +127,19 @@ https://github.com/exrector/myRAG/settings/hooks/588662614
 - Payload данные
 - Время обработки
 
+### 🔒 Безопасность:
+
+**MCP Auth Token установлен!** ✅
+
+Токен хранится в: `MCP_AUTH_TOKEN.txt`
+
+Для доступа к MCP Server нужен токен в заголовке:
+```
+Authorization: Bearer e4e0b98b4c8cc0bd0fd4681655815eee16c941ae710455fbd00e58a7be795bca
+```
+
+Без токена: 401 Unauthorized ✅
+
 ### Cloudflare Dashboard:
 
 **Workers:**
