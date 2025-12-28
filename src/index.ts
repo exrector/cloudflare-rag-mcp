@@ -5,7 +5,8 @@
 interface Env {
   VECTORIZE: VectorizeIndex;
   AI: Ai;
-  METADATA?: KVNamespace;
+  DB: D1Database;
+  R2?: R2Bucket;
   MCP_AUTH_TOKEN?: string;
   EMBEDDING_MODEL: string;
 }
@@ -56,24 +57,66 @@ async function searchVectorize(
   }
 }
 
-function formatSearchResults(matches: VectorizeMatch[]): string {
+async function getChunksFromD1(db: D1Database, chunkIds: string[]): Promise<Map<string, string>> {
+  const placeholders = chunkIds.map(() => '?').join(',');
+  const query = `SELECT id, text FROM chunks WHERE id IN (${placeholders})`;
+
+  const result = await db.prepare(query).bind(...chunkIds).all();
+
+  const textMap = new Map<string, string>();
+  if (result.results) {
+    for (const row of result.results) {
+      textMap.set(row.id as string, row.text as string);
+    }
+  }
+
+  return textMap;
+}
+
+async function formatSearchResults(matches: VectorizeMatch[], db: D1Database): Promise<string> {
   if (matches.length === 0) {
     return 'No relevant documents found.';
   }
 
+  // Фильтруем только векторы с новым форматом (chunk_id)
+  const newFormatMatches = matches.filter(m => m.metadata.chunk_id !== undefined);
+  const oldFormatMatches = matches.filter(m => m.metadata.chunk_id === undefined);
+
   let output = `Found ${matches.length} relevant documents:\n\n`;
 
-  matches.forEach((match, idx) => {
-    const metadata = match.metadata;
-    const score = (match.score * 100).toFixed(1);
+  // Обрабатываем векторы с новым форматом (из D1)
+  if (newFormatMatches.length > 0) {
+    const chunkIds = newFormatMatches.map(m => m.metadata.chunk_id as string);
+    const textsMap = await getChunksFromD1(db, chunkIds);
 
-    output += `## Document ${idx + 1} (Relevance: ${score}%)\n`;
-    output += `**File:** ${metadata.filePath}\n`;
-    output += `**Topic:** ${metadata.topic}\n`;
-    output += `**Folder:** ${metadata.folder}\n\n`;
-    output += `${metadata.text}\n\n`;
-    output += '---\n\n';
-  });
+    newFormatMatches.forEach((match, idx) => {
+      const metadata = match.metadata;
+      const score = (match.score * 100).toFixed(1);
+      const fullText = textsMap.get(metadata.chunk_id as string) || '[Text not found in D1]';
+
+      output += `## Document ${idx + 1} (Relevance: ${score}%)\n`;
+      output += `**File:** ${metadata.file_path}\n`;
+      output += `**Topic:** ${metadata.topic}\n`;
+      output += `**Folder:** ${metadata.folder}\n\n`;
+      output += `${fullText}\n\n`;
+      output += '---\n\n';
+    });
+  }
+
+  // Обрабатываем старые векторы (с text в metadata)
+  if (oldFormatMatches.length > 0) {
+    oldFormatMatches.forEach((match, idx) => {
+      const metadata = match.metadata;
+      const score = (match.score * 100).toFixed(1);
+
+      output += `## Document ${newFormatMatches.length + idx + 1} (Relevance: ${score}%) [Legacy]\n`;
+      output += `**File:** ${metadata.filePath || metadata.file_path}\n`;
+      output += `**Topic:** ${metadata.topic}\n`;
+      output += `**Folder:** ${metadata.folder}\n\n`;
+      output += `${metadata.text || '[No text]'}\n\n`;
+      output += '---\n\n';
+    });
+  }
 
   return output;
 }
@@ -148,7 +191,7 @@ async function handleMCPRequest(message: MCPMessage, env: Env): Promise<MCPMessa
       const filter = topic ? { topic } : undefined;
       const matches = await searchVectorize(env.VECTORIZE, embedding, limit, filter);
       const filteredMatches = matches.filter((m) => m.score >= minScore);
-      const formattedResults = formatSearchResults(filteredMatches);
+      const formattedResults = await formatSearchResults(filteredMatches, env.DB);
 
       return {
         jsonrpc: '2.0',

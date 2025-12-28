@@ -11,6 +11,17 @@ index_name = "myrag-index"
 [ai]
 binding = "AI"
 
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "myrag-metadata"
+database_id = "3bc73c19-69ce-4940-b63b-6a2ca5cf5dfb"
+
+# R2 bucket binding (опционально, для хранения оригинальных файлов)
+# [[r2_buckets]]
+# binding = "R2"
+# bucket_name = "myrag-documents"
+
 # Environment variables
 [vars]
 EMBEDDING_MODEL = "@cf/baai/bge-large-en-v1.5"
