@@ -1,5 +1,5 @@
 name = "rag-mcp-server"
-main = "src/index.ts"
+main = "src/mcp-server.ts"
 compatibility_date = "2024-12-01"
 
 # Vectorize binding
@@ -17,17 +17,8 @@ binding = "DB"
 database_name = "myrag-metadata"
 database_id = "3bc73c19-69ce-4940-b63b-6a2ca5cf5dfb"
 
-# R2 bucket binding (опционально, для хранения оригинальных файлов)
-# [[r2_buckets]]
-# binding = "R2"
-# bucket_name = "myrag-documents"
-
 # Environment variables
 [vars]
 EMBEDDING_MODEL = "@cf/baai/bge-m3"
-CHUNK_SIZE = "512"
-CHUNK_OVERLAP = "50"
 
-# Секретные переменные (установите через: wrangler secret put VARIABLE_NAME)
-# GITHUB_TOKEN - для доступа к приватному репозиторию (только для ingest)
-# MCP_AUTH_TOKEN - для авторизации MCP клиентов (опционально)
+# Secret: MCP_AUTH_TOKEN (optional, set via: wrangler secret put MCP_AUTH_TOKEN)
