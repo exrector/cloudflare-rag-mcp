@@ -286,12 +286,14 @@ async function main() {
 
   // Создать запись в sync_log
   const syncStartTime = Math.floor(Date.now() / 1000);
-  const syncLogResult = await executeD1Query(
+  await executeD1Query(
     `INSERT INTO sync_log (sync_started_at, status, github_commit_sha)
-     VALUES (?, 'running', ?)
-     RETURNING id`,
+     VALUES (?, 'running', ?)`,
     [syncStartTime, GITHUB_SHA]
   );
+
+  // Получить ID созданной записи через last_insert_rowid()
+  const syncLogResult = await executeD1Query('SELECT last_insert_rowid() as id');
   const syncLogId = syncLogResult.results[0]?.id;
   log(`📋 Created sync log entry: ${syncLogId}`);
 
