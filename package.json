@@ -7,7 +7,11 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "deploy:webhook": "wrangler deploy --config wrangler-webhook.toml",
-    "dev:webhook": "wrangler dev --config wrangler-webhook.toml"
+    "dev:webhook": "wrangler dev --config wrangler-webhook.toml",
+    "check:db": "node check-db-status.js",
+    "check:docs": "npx wrangler d1 execute myrag-metadata --remote --command 'SELECT COUNT(*) as count FROM documents'",
+    "check:chunks": "npx wrangler d1 execute myrag-metadata --remote --command 'SELECT COUNT(*) as count FROM chunks'",
+    "check:sync": "npx wrangler d1 execute myrag-metadata --remote --command 'SELECT * FROM sync_log ORDER BY sync_started_at DESC LIMIT 5'"
   },
   "keywords": ["rag", "mcp", "cloudflare", "vectorize", "claude"],
   "author": "",

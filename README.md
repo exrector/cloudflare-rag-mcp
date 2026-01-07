@@ -157,7 +157,37 @@ npx wrangler tail rag-mcp-server
 
 ### Проверить статистику D1
 
+#### Вариант 1: Полная диагностика (рекомендуется)
+
 ```bash
+# Установить API токен
+export CLOUDFLARE_ACCOUNT_ID="c1a12d6a421765d2ae66bd1ff3fa0e1f"
+export CLOUDFLARE_API_TOKEN="your_token"
+
+# Запустить диагностический скрипт
+npm run check:db
+```
+
+**Что покажет:**
+- Количество documents и chunks
+- Список последних документов
+- Проверка что все chunks имеют vector_id
+- История синхронизаций из sync_log
+- Статистика Vectorize index
+
+#### Вариант 2: Быстрые проверки через wrangler
+
+```bash
+# Количество документов
+npm run check:docs
+
+# Количество chunks
+npm run check:chunks
+
+# История синхронизаций
+npm run check:sync
+
+# Или напрямую
 npx wrangler d1 execute myrag-metadata --remote --command \
   "SELECT COUNT(*) as docs FROM documents; SELECT COUNT(*) as chunks FROM chunks;"
 ```
@@ -175,6 +205,7 @@ npx wrangler vectorize get myrag-index
 - ❌ stdio мост `mcp-stdio-bridge.cjs` - костыль
 - ❌ Дубликаты векторов при реиндексации
 - ❌ Плохая обработка ошибок
+- ❌ Нет логирования синхронизаций
 
 ### Решения v3.0:
 - ✅ GitHub Actions - нет CPU limits
@@ -182,6 +213,8 @@ npx wrangler vectorize get myrag-index
 - ✅ Удаление старых векторов перед реиндексацией
 - ✅ Батчинг embeddings по 5 для надёжности
 - ✅ Правильная UTF-8 кодировка
+- ✅ **Полное логирование в sync_log** - отслеживание всех синхронизаций с статистикой
+- ✅ Диагностический скрипт `check-db-status.js` для проверки состояния базы
 
 ## MCP Tool: search_knowledge
 

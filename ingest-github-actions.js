@@ -271,7 +271,7 @@ async function processFile(filePath) {
 
   log(`  ✅ Saved ${textChunks.length} chunks to D1`);
 
-  return { documentsCreated: 1, chunksCreated: textChunks.length };
+  return { documentsCreated: 1, chunksCreated: textChunks.length, vectorsUploaded: textChunks.length };
 }
 
 // ===== Main =====
@@ -284,11 +284,35 @@ async function main() {
     throw new Error('Missing CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN');
   }
 
+  // Создать запись в sync_log
+  const syncStartTime = Math.floor(Date.now() / 1000);
+  const syncLogResult = await executeD1Query(
+    `INSERT INTO sync_log (sync_started_at, status, github_commit_sha)
+     VALUES (?, 'running', ?)
+     RETURNING id`,
+    [syncStartTime, GITHUB_SHA]
+  );
+  const syncLogId = syncLogResult.results[0]?.id;
+  log(`📋 Created sync log entry: ${syncLogId}`);
+
   // Получить список изменённых файлов
   const files = getChangedFiles();
 
   if (files.length === 0) {
     log('ℹ️  No text files changed');
+
+    // Завершить sync_log
+    await executeD1Query(
+      `UPDATE sync_log
+       SET sync_completed_at = strftime('%s', 'now'),
+           status = 'completed',
+           files_processed = 0,
+           chunks_created = 0,
+           vectors_uploaded = 0
+       WHERE id = ?`,
+      [syncLogId]
+    );
+
     return;
   }
 
@@ -296,6 +320,9 @@ async function main() {
 
   let success = 0;
   let failed = 0;
+  let totalChunks = 0;
+  let totalVectors = 0;
+  let errorMessages = [];
 
   for (const file of files) {
     if (!fs.existsSync(file)) {
@@ -304,26 +331,76 @@ async function main() {
     }
 
     try {
-      await processFile(file);
+      const result = await processFile(file);
       success++;
+      totalChunks += result.chunksCreated;
+      totalVectors += result.vectorsUploaded;
     } catch (error) {
       log(`❌ Error processing ${file}: ${error.message}`);
       console.error(error.stack);
       failed++;
+      errorMessages.push(`${file}: ${error.message}`);
     }
   }
 
   log('');
   log(`✅ Success: ${success}`);
   log(`❌ Failed: ${failed}`);
+  log(`📝 Total chunks: ${totalChunks}`);
+  log(`🔢 Total vectors: ${totalVectors}`);
+
+  // Обновить sync_log с финальной статистикой
+  const status = failed > 0 ? 'completed_with_errors' : 'completed';
+  const errorMessage = errorMessages.length > 0 ? errorMessages.join('; ') : null;
+
+  await executeD1Query(
+    `UPDATE sync_log
+     SET sync_completed_at = strftime('%s', 'now'),
+         status = ?,
+         files_processed = ?,
+         chunks_created = ?,
+         vectors_uploaded = ?,
+         error_message = ?
+     WHERE id = ?`,
+    [status, success, totalChunks, totalVectors, errorMessage, syncLogId]
+  );
+
+  log(`📋 Updated sync log entry: ${syncLogId} (status: ${status})`);
 
   if (failed > 0) {
     process.exit(1);
   }
 }
 
-main().catch(error => {
+main().catch(async error => {
   log(`❌ Fatal error: ${error.message}`);
   console.error(error.stack);
+
+  // Попытаться обновить sync_log при фатальной ошибке
+  try {
+    // Найти последнюю незавершённую синхронизацию
+    const result = await executeD1Query(
+      `SELECT id FROM sync_log
+       WHERE status = 'running'
+       ORDER BY sync_started_at DESC
+       LIMIT 1`
+    );
+
+    if (result.results && result.results.length > 0) {
+      const syncLogId = result.results[0].id;
+      await executeD1Query(
+        `UPDATE sync_log
+         SET sync_completed_at = strftime('%s', 'now'),
+             status = 'failed',
+             error_message = ?
+         WHERE id = ?`,
+        [error.message, syncLogId]
+      );
+      log(`📋 Updated sync log entry ${syncLogId} with failure status`);
+    }
+  } catch (syncLogError) {
+    log(`⚠️  Could not update sync_log: ${syncLogError.message}`);
+  }
+
   process.exit(1);
 });
